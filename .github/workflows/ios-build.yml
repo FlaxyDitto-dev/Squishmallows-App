@@ -15,44 +15,48 @@ jobs:
 
       - name: Initialize Project Directory Structure
         run: |
-          # 1. Create a safe, tracking-isolated package base
           npm init -y
           npm install @capacitor/core @capacitor/cli
-
-          # 2. Build a dedicated web target directory
-          mkdir -p www
           
-          # 3. Safely copy your HTML/CSS/JS files into the target folder if they exist in root
+          # Force create the web assets directory layout
+          mkdir -p www
+          touch www/index.html
+          
+          # Move whatever project files exist into our web workspace
           cp index.html www/ 2>/dev/null || true
           cp *.js www/ 2>/dev/null || true
           cp *.css www/ 2>/dev/null || true
 
-          # 4. Initialize Capacitor explicitly targeting the safe 'www' folder
-          npx cap init "Squishmallows" "com.flaxyditto.squishmallows" --web-dir=www --id="com.flaxyditto.squishmallows"
-
-          # 5. Inject the native iOS platform container
+          # Initialize a clean configuration file 
+          npx cap init "Squishmallows" "com.flaxyditto.squishmallows" --web-dir=www
           npx cap add ios
 
-      - name: Build Xcode Project
+      - name: Compile App Bundle Payload
         run: |
           npx cap sync ios
           cd ios/App
-          xcodebuild clean build \
-            -workspace App.xcworkspace \
+          
+          # Compile to a generic iOS Device bundle layout bypassing identity parameters entirely
+          xcodebuild -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE=""
+            PROVISIONING_PROFILE="" \
+            clean build
 
-      - name: Package Payload into IPA
+      - name: Package Manual Unsigned IPA Archive
         run: |
-          mkdir -p ios/App/build/Release-iphoneos/Payload
-          cp -r ios/App/build/Release-iphoneos/App.app ios/App/build/Release-iphoneos/Payload/
-          cd ios/App/build/Release-iphoneos
-          zip -r ../../../Squishmallows.ipa Payload
+          # 1. Establish an official internal deployment structure
+          mkdir -p Payload
+          
+          # 2. Extract and copy the compiled workspace bundle directly into our archive target
+          cp -r ios/App/build/Release-iphoneos/App.app Payload/ 2>/dev/null || cp -r ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphoneos/App.app Payload/
+          
+          # 3. Compress the folder structure directly into an .ipa bundle format
+          zip -r Squishmallows.ipa Payload
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
