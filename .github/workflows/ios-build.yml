@@ -1,0 +1,41 @@
+name: Build Unsigned iOS IPA
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Cordova or Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli
+          npx cap init "Squishmallows" "com.yourname.squishmallows" --web-dir=.
+          npx cap add ios
+
+      - name: Build Xcode Project
+        run: |
+          npx cap sync ios
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+
+      - name: Package Payload into IPA
+        run: |
+          mkdir -p ios/App/build/Release-iphoneos/Payload
+          cp -r ios/App/build/Release-iphoneos/App.app ios/App/build/Release-iphoneos/Payload/
+          cd ios/App/build/Release-iphoneos
+          zip -r ../../../Squishmallows.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: squishmallows-ipa
+          path: Squishmallows.ipa
+          
