@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Squishmallow Squad World</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    :root {
+      --primary-pink: #ff6b8b;
+      --primary-dark: #d64a6d;
+      --accent-lilac: #845ec2;
+      --accent-mint: #00c9a7;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --card-blur: 14px;
+      --text-main: #2b233a;
+      --text-muted: #6f677d;
+      --border-radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f7e6f0;
+      background-image: 
+        radial-gradient(circle at 18% 22%, rgba(255, 182, 193, 0.75) 0%, rgba(255, 182, 193, 0) 28%),
+        radial-gradient(circle at 82% 16%, rgba(186, 225, 255, 0.75) 0%, rgba(186, 225, 255, 0) 32%),
+        radial-gradient(circle at 50% 50%, rgba(255, 223, 186, 0.6) 0%, rgba(255, 223, 186, 0) 36%),
+        radial-gradient(circle at 20% 80%, rgba(186, 255, 201, 0.65) 0%, rgba(186, 255, 201, 0) 30%),
+        radial-gradient(circle at 85% 85%, rgba(226, 206, 255, 0.8) 0%, rgba(226, 206, 255, 0) 34%),
+        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.28'%3E%3Cellipse cx='30' cy='35' rx='18' ry='22'/%3E%3Cellipse cx='90' cy='95' rx='18' ry='22'/%3E%3Ccircle cx='25' cy='32' r='2' fill='%23554466' fill-opacity='0.25'/%3E%3Ccircle cx='35' cy='32' r='2' fill='%23554466' fill-opacity='0.25'/%3E%3Ccircle cx='85' cy='92' r='2' fill='%23554466' fill-opacity='0.25'/%3E%3Ccircle cx='95' cy='92' r='2' fill='%23554466' fill-opacity='0.25'/%3E%3C/g%3E%3C/svg%3E"),
+        url('squish_wallpaper.png');
+      background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 120px 120px, cover;
+      background-position: center;
+      background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      color: var(--text-main);
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 30px 16px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    header {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      padding: 10px 16px;
+      border-radius: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(255, 107, 139, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 1.02rem;
+      background: linear-gradient(135deg, #ff6b8b, #845ec2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 107, 139, 0.1);
+      border: none;
+      outline: none;
+      font-size: 1.15rem;
+      padding: 6px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-pink);
+      font-weight: bold;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 107, 139, 0.2);
+    }
+
+    .screen-view {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .screen-view.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-banner {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .hero-banner h2 {
+      font-size: 1.25rem;
+      color: var(--primary-pink);
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .hero-banner p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .nav-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border-radius: var(--border-radius);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+
+    .nav-card:active {
+      transform: scale(0.97);
+    }
+
+    .nav-card-icon {
+      font-size: 2rem;
+    }
+
+    .nav-card h3 {
+      font-size: 0.92rem;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .nav-card p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .search-box {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border-radius: var(--border-radius);
+      padding: 6px 8px 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .search-box input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .pill-btn {
+      background: linear-gradient(135deg, var(--primary-pink), var(--primary-dark));
+      color: #fff;
+      border: none;
+      outline: none;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 9px 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 107, 139, 0.35);
+      white-space: nowrap;
+    }
+
+    .pill-btn:active {
+      transform: scale(0.96);
+    }
+
+    .status-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      color: #7a638b;
+      min-height: 18px;
+    }
+
+    .image-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border-radius: var(--border-radius);
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .image-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+      display: none;
+    }
+
+    .image-placeholder {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .details-card {
+      flex: 1;
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border-radius: var(--border-radius);
+      padding: 16px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .details-card h2 {
+      font-size: 1.25rem;
+      color: var(--primary-pink);
+      font-weight: 800;
+    }
+
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #3c4043;
+      border: 1.5px solid #dadce0;
+      padding: 6px 11px;
+      border-radius: 14px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      white-space: nowrap;
+    }
+
+    .meta-row {
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255, 107, 139, 0.12);
+      color: var(--primary-pink);
+      margin-right: 4px;
+    }
+
+    .bio-box {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1.5px dashed rgba(132, 94, 194, 0.2);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #3f354f;
+    }
+
+    .fixed-grid-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 155px;
+      align-content: start;
+      gap: 12px;
+      overflow-y: auto;
+      flex: 1;
+      padding-bottom: 20px;
+    }
+
+    .fixed-plush-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      height: 155px;
+      width: 100%;
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      gap: 6px;
+    }
+
+    .fixed-plush-card:active {
+      transform: scale(0.97);
+    }
+
+    .fixed-plush-card img {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));
+    }
+
+    .fixed-plush-card h4 {
+      font-size: 0.88rem;
+      color: var(--text-main);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 95%;
+    }
+
+    .fixed-plush-card span {
+      font-size: 0.72rem;
+      color: var(--primary-pink);
+      font-weight: 800;
+    }
+
+    .squad-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .squad-item {
+      background: var(--card-bg);
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .claw-canvas-container {
+      position: relative;
+      width: 100%;
+      height: 360px;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border: 2px solid rgba(255,255,255,0.9);
+      background: #110e19;
+    }
+
+    #threeCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .claw-overlay-tip {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 0.70rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .arcade-controls {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .joystick-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      width: 150px;
+      margin: 0 auto;
+    }
+
+    .joy-btn {
+      background: #f0ebf5;
+      border: none;
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
+    .joy-btn:active {
+      background: var(--primary-pink);
+      color: #fff;
+    }
+
+    .drop-btn {
+      background: linear-gradient(135deg, #00c9a7, #009378);
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 201, 167, 0.35);
+    }
+
+    .drop-btn:disabled {
+      opacity: 0.5;
+    }
+
+    .gasha-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 10px;
+      overflow-y: auto;
+      flex: 1;
+      align-content: start;
+    }
+
+    .gasha-bubble {
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 107, 139, 0.55));
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 20px rgba(255, 107, 139, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      cursor: pointer;
+      animation: floatBubble 2.5s ease-in-out infinite alternate;
+    }
+
+    .gasha-bubble:nth-child(2n) {
+      animation-delay: 0.4s;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(132, 94, 194, 0.55));
+    }
+
+    .gasha-bubble:nth-child(3n) {
+      animation-delay: 0.8s;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(0, 201, 167, 0.55));
+    }
+
+    @keyframes floatBubble {
+      from { transform: translateY(0px) scale(1); }
+      to { transform: translateY(-8px) scale(1.03); }
+    }
+
+    .gasha-bubble:active {
+      transform: scale(0.85);
+    }
+
+    .prize-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(43, 35, 58, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .prize-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 350px;
+      max-height: 85vh;
+      border-radius: 26px;
+      padding: 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      text-align: center;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .prize-img {
+      max-height: 150px;
+      width: auto;
+      object-fit: contain;
+      margin: 0 auto;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(43, 35, 58, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 340px;
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .lang-select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1.5px solid #e1dbe8;
+      background: #faf8fc;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <div class="header-left">
+        <button class="icon-btn" id="navBackBtn" onclick="showScreen('homeScreen')" style="display:none;">←</button>
+        <h1 id="appHeaderTitle" data-i18n="appTitle">Squishmallow Squad</h1>
+      </div>
+      <button class="icon-btn" onclick="openSettings()" aria-label="Settings">⚙️</button>
+    </header>
+
+    <!-- 1. HOME SCREEN -->
+    <section class="screen-view active" id="homeScreen">
+      <div class="hero-banner">
+        <h2>Squishmallow World</h2>
+        <p data-i18n="heroSubtitle">Explore squads, search plushies, and win surprise eggs in the arcade!</p>
+      </div>
+
+      <div class="home-grid">
+        <div class="nav-card" onclick="showScreen('searchScreen')">
+          <div class="nav-card-icon">🔍</div>
+          <h3 data-i18n="navSearch">Plush Search</h3>
+          <p data-i18n="navSearchDesc">Search by name or collector number</p>
+        </div>
+
+        <div class="nav-card" onclick="showScreen('squadScreen')">
+          <div class="nav-card-icon">👥</div>
+          <h3 data-i18n="navSquads">Squad Finder</h3>
+          <p data-i18n="navSquadsDesc">Explore squads and their members</p>
+        </div>
+
+        <div class="nav-card" onclick="showScreen('arcadeMenuScreen')">
+          <div class="nav-card-icon">🕹️</div>
+          <h3 data-i18n="navArcade">Arcade Games</h3>
+          <p data-i18n="navArcadeDesc">3D Claw & Mystery Pop</p>
+        </div>
+
+        <div class="nav-card" onclick="showScreen('indexScreen')">
+          <div class="nav-card-icon">🏆</div>
+          <h3 data-i18n="navIndex">Collection Index</h3>
+          <p data-i18n="navIndexDesc">View your captured Squishmallows</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SEARCH SCREEN -->
+    <section class="screen-view" id="searchScreen">
+      <div class="search-box">
+        <input type="text" id="searchInput" data-i18n-ph="searchHint" placeholder="Search Collector # or Name (e.g. 1, Cam)...">
+        <button class="pill-btn" data-i18n="searchBtn" onclick="runSearch()">Search</button>
+      </div>
+
+      <div class="status-badge" id="statusBadge" data-i18n="readyStatus">Ready to search.</div>
+
+      <div class="image-card">
+        <span class="image-placeholder" id="imgPlaceholder" data-i18n="imgPlaceholder">Squishmallow photo will appear here</span>
+        <img id="squishImg" alt="Squishmallow Portrait" crossorigin="anonymous">
+      </div>
+
+      <div class="details-card" id="detailsCard">
+        <div class="meta-row" style="color: var(--text-muted); text-align: center; margin-top: 30px; font-weight: 600;" data-i18n="welcomePrompt">
+          Enter a name or collector number above to explore your squad!
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SQUAD SCREEN -->
+    <section class="screen-view" id="squadScreen">
+      <div class="search-box">
+        <input type="text" id="squadSearchInput" data-i18n-ph="filterSquadHint" placeholder="Filter Squads (e.g. Farm, Ocean)..." oninput="filterSquadList()">
+      </div>
+
+      <div class="status-badge" id="squadStatusBadge" data-i18n="squadSelectBadge">Select a squad to explore its members</div>
+
+      <div class="squad-list" id="squadsContainer"></div>
+
+      <div id="squadMembersView" style="display:none;" class="details-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 id="activeSquadTitle" style="color:var(--primary-pink); font-size:1.15rem;">Squad</h2>
+          <button class="pill-btn" style="padding:4px 10px; font-size:0.75rem;" data-i18n="closeBtn" onclick="closeSquadMembers()">Close</button>
+        </div>
+        <div class="search-box" style="margin-top:8px;">
+          <input type="text" id="memberFilterInput" data-i18n-ph="searchInSquadHint" placeholder="Search in this squad..." oninput="filterActiveSquadMembers()">
+        </div>
+        <div class="fixed-grid-container" id="squadMembersGrid" style="margin-top:10px;"></div>
+      </div>
+    </section>
+
+    <!-- 4. ARCADE GAMES MENU SCREEN -->
+    <section class="screen-view" id="arcadeMenuScreen">
+      <div class="hero-banner">
+        <h2 data-i18n="arcadeTitle">Arcade Games</h2>
+        <p data-i18n="arcadeSubtitle">Pick a game to win exclusive Squishmallows for your index!</p>
+      </div>
+
+      <div class="home-grid">
+        <div class="nav-card" onclick="showScreen('clawScreen')">
+          <div class="nav-card-icon">🏗️</div>
+          <h3 data-i18n="clawTitle">3D Claw Machine</h3>
+          <p data-i18n="clawDesc">Orbit the camera, aim the crane, grab surprise eggs</p>
+        </div>
+
+        <div class="nav-card" onclick="showScreen('bubbleScreen')">
+          <div class="nav-card-icon">🫧</div>
+          <h3 data-i18n="bubbleTitle">Mystery Bubble Pop</h3>
+          <p data-i18n="bubbleDesc">Tap surprise capsules to pop and rescue plushies</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 3D CLAW MACHINE SCREEN -->
+    <section class="screen-view" id="clawScreen">
+      <div class="claw-canvas-container">
+        <div class="claw-overlay-tip" data-i18n="clawTip">👆 Drag/Swipe to Orbit Camera</div>
+        <canvas id="threeCanvas"></canvas>
+      </div>
+
+      <div class="arcade-controls">
+        <div class="joystick-pad">
+          <div></div>
+          <button class="joy-btn" onpointerdown="startClawMove('up')" onpointerup="stopClawMove()">▲</button>
+          <div></div>
+          <button class="joy-btn" onpointerdown="startClawMove('left')" onpointerup="stopClawMove()">◀</button>
+          <div style="display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:bold; color:var(--text-muted);" data-i18n="aimLabel">AIM</div>
+          <button class="joy-btn" onpointerdown="startClawMove('right')" onpointerup="stopClawMove()">▶</button>
+          <div></div>
+          <button class="joy-btn" onpointerdown="startClawMove('down')" onpointerup="stopClawMove()">▼</button>
+          <div></div>
+        </div>
+        <button class="drop-btn" id="clawDropBtn" data-i18n="dropBtn" onclick="triggerClawDrop()">🕹️ DROP CLAW!</button>
+      </div>
+    </section>
+
+    <!-- 6. MYSTERY BUBBLE POPPER -->
+    <section class="screen-view" id="bubbleScreen">
+      <div class="hero-banner" style="padding:12px;">
+        <h2 style="font-size:1.1rem;" data-i18n="bubbleTitle">Mystery Bubble Pop</h2>
+        <p data-i18n="bubbleGameSub">Tap a floating mystery bubble to pop it and reveal the Squishmallow inside!</p>
+      </div>
+
+      <div class="gasha-container" id="gashaContainer"></div>
+    </section>
+
+    <!-- 7. FIXED SIZE COLLECTION INDEX SCREEN -->
+    <section class="screen-view" id="indexScreen">
+      <div class="hero-banner" style="padding:14px;">
+        <h2 style="font-size:1.15rem;" data-i18n="trophyTitle">Rescue Trophy Index</h2>
+        <p id="indexStatsText">You have collected 0 unique Squishmallows!</p>
+      </div>
+      <div class="fixed-grid-container" id="trophyGrid"></div>
+    </section>
+  </div>
+
+  <!-- Prize Popup Modal -->
+  <div class="prize-modal" id="prizeModal">
+    <div class="prize-card">
+      <span style="font-size:2rem;" data-i18n="youWon">🎉 YOU WON! 🎉</span>
+      <img id="prizeImg" class="prize-img" alt="Prize Squishmallow" crossorigin="anonymous">
+      <h2 id="prizeName" style="color:var(--primary-pink); font-size:1.3rem;"></h2>
+      <p id="prizeFullName" style="font-weight:700; font-size:0.88rem; color:#4a3f5a;"></p>
+      <div style="display:flex; justify-content:center; gap:6px;">
+        <span class="badge-pill" id="prizeCollector"></span>
+        <span class="badge-pill" id="prizeSquad"></span>
+      </div>
+      <p id="prizeDate" style="font-size:0.80rem; color:var(--text-muted);"></p>
+      <div class="bio-box" id="prizeBio" style="text-align:left;"></div>
+      <button class="pill-btn" data-i18n="claimBtn" onclick="closePrizeModal()" style="margin-top:10px;">Claim Prize!</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal" onclick="closeSettings(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 data-i18n="settingsTitle">App Settings</h3>
+        <button style="border:none; background:none; font-size:1.3rem; cursor:pointer;" onclick="closeSettings()">&times;</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-size:0.82rem; font-weight:700; color:var(--text-muted);" data-i18n="langLabel">Language</label>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage(this.value)">
+          <option value="en">English</option>
+          <option value="es">Español (Spanish)</option>
+          <option value="fr">Français (French)</option>
+          <option value="de">Deutsch (German)</option>
+          <option value="it">Italiano (Italian)</option>
+        </select>
+      </div>
+      <button class="pill-btn" data-i18n="doneBtn" onclick="closeSettings()">Done</button>
+    </div>
+  </div>
+
+  <script>
+    // --- COMPREHENSIVE TRANSLATION SYSTEM ---
+    const I18N = {
+      en: {
+        appTitle: "Squishmallow Squad",
+        heroSubtitle: "Explore squads, search plushies, and win surprise eggs in the arcade!",
+        navSearch: "Plush Search",
+        navSearchDesc: "Search by name or collector number",
+        navSquads: "Squad Finder",
+        navSquadsDesc: "Explore squads and their members",
+        navArcade: "Arcade Games",
+        navArcadeDesc: "3D Claw & Mystery Pop",
+        navIndex: "Collection Index",
+        navIndexDesc: "View your captured Squishmallows",
+        searchHint: "Search Collector # or Name (e.g. 1, Cam)...",
+        searchBtn: "Search",
+        readyStatus: "Ready to search.",
+        searching: "Searching for '{q}'...",
+        emptyInput: "Please enter a Collector # or Character name.",
+        notFound: "No Squishmallow found for '{q}'.",
+        searchError: "Could not find character (offline or not found).",
+        imgPlaceholder: "Squishmallow photo will appear here",
+        welcomePrompt: "Enter a name or collector number above to explore your squad!",
+        filterSquadHint: "Filter Squads (e.g. Farm, Ocean)...",
+        squadSelectBadge: "Select a squad to explore its members",
+        closeBtn: "Close",
+        searchInSquadHint: "Search in this squad...",
+        arcadeTitle: "Arcade Games",
+        arcadeSubtitle: "Pick a game to win exclusive Squishmallows for your index!",
+        clawTitle: "3D Claw Machine",
+        clawDesc: "Orbit the camera, aim the crane, grab surprise eggs",
+        clawTip: "👆 Drag/Swipe to Orbit Camera",
+        aimLabel: "AIM",
+        dropBtn: "🕹️ DROP CLAW!",
+        bubbleTitle: "Mystery Bubble Pop",
+        bubbleDesc: "Tap surprise capsules to pop and rescue plushies",
+        bubbleGameSub: "Tap a floating mystery bubble to pop it and reveal the Squishmallow inside!",
+        trophyTitle: "Rescue Trophy Index",
+        trophyCount: "You have collected {count} unique Squishmallows!",
+        noTrophies: "No plushies rescued yet! Go to the Arcade to win some!",
+        youWon: "🎉 YOU WON! 🎉",
+        claimBtn: "Claim Prize!",
+        settingsTitle: "App Settings",
+        langLabel: "Language",
+        doneBtn: "Done",
+        searchOnlineBtn: "🔍 Search Online",
+        fullName: "Full Name",
+        collectorShort: "Collector",
+        squad: "Squad",
+        squishdate: "Squishdate",
+        wikiId: "Wiki ID",
+        biography: "Biography",
+        foundIn: "Found in {src} • Collector #{id}",
+        localVault: "Offline Vault",
+        fandomWiki: "Fandom Squad Wiki",
+        noBio: "Squishmallow collectible plush. No biography text found.",
+        exploreBtn: "Explore →",
+        plushiesCount: "{count} Plushies →"
+      },
+      es: {
+        appTitle: "Mundo Squishmallow",
+        heroSubtitle: "¡Explora escuadrones, busca peluches y gana huevos sorpresa en el arcade!",
+        navSearch: "Buscar Peluche",
+        navSearchDesc: "Buscar por nombre o número",
+        navSquads: "Escuadrones",
+        navSquadsDesc: "Explora escuadrones y sus miembros",
+        navArcade: "Juegos Arcade",
+        navArcadeDesc: "Garra 3D y Burbujas Mágicas",
+        navIndex: "Colección",
+        navIndexDesc: "Tus Squishmallows ganados",
+        searchHint: "Buscar Nº Coleccionista o Nombre...",
+        searchBtn: "Buscar",
+        readyStatus: "Listo para buscar.",
+        searching: "Buscando '{q}'...",
+        emptyInput: "Ingresa un número o nombre.",
+        notFound: "No se encontró ningún Squishmallow para '{q}'.",
+        searchError: "No se pudo encontrar el personaje.",
+        imgPlaceholder: "La foto del Squishmallow aparecerá aquí",
+        welcomePrompt: "¡Escribe un nombre o número de coleccionista arriba!",
+        filterSquadHint: "Filtrar escuadrones...",
+        squadSelectBadge: "Selecciona un escuadrón para ver miembros",
+        closeBtn: "Cerrar",
+        searchInSquadHint: "Buscar en este escuadrón...",
+        arcadeTitle: "Juegos Arcade",
+        arcadeSubtitle: "¡Juega para ganar Squishmallows exclusivos!",
+        clawTitle: "Máquina de Garra 3D",
+        clawDesc: "Gira la cámara, apunta y atrapa huevos sorpresa",
+        clawTip: "👆 Arrastra para girar la cámara",
+        aimLabel: "MIRA",
+        dropBtn: "🕹️ ¡BAJAR GARRA!",
+        bubbleTitle: "Burbujas Mágicas",
+        bubbleDesc: "Toca las cápsulas para rescatar peluches",
+        bubbleGameSub: "¡Toca una burbuja misteriosa para revelar el Squishmallow!",
+        trophyTitle: "Índice de Rescate",
+        trophyCount: "¡Has rescatado {count} Squishmallows únicos!",
+        noTrophies: "¡Aún no hay peluches rescatados! ¡Ve al Arcade!",
+        youWon: "🎉 ¡HAS GANADO! 🎉",
+        claimBtn: "¡Reclamar Premio!",
+        settingsTitle: "Configuración",
+        langLabel: "Idioma",
+        doneBtn: "Listo",
+        searchOnlineBtn: "🔍 Buscar en Google",
+        fullName: "Nombre completo",
+        collectorShort: "Coleccionista",
+        squad: "Escuadrón",
+        squishdate: "Fecha Squish",
+        wikiId: "ID de Wiki",
+        biography: "Biografía",
+        foundIn: "Encontrado en {src} • Coleccionista #{id}",
+        localVault: "Colección local",
+        fandomWiki: "Wiki de la comunidad",
+        noBio: "Peluche coleccionable Squishmallow. No hay biografía disponible.",
+        exploreBtn: "Ver →",
+        plushiesCount: "{count} Peluches →"
+      },
+      fr: {
+        appTitle: "Monde Squishmallow",
+        heroSubtitle: "Explorez les squads, cherchez des peluches et attrapez des œufs surprises !",
+        navSearch: "Recherche Peluche",
+        navSearchDesc: "Recherche par nom ou numéro",
+        navSquads: "Trouveur d'Escouades",
+        navSquadsDesc: "Découvrez les squads et membres",
+        navArcade: "Jeux d'Arcade",
+        navArcadeDesc: "Pince 3D & Bulles Mystères",
+        navIndex: "Index Trophées",
+        navIndexDesc: "Vos peluches gagnées",
+        searchHint: "Chercher Nº Collectionneur ou Nom...",
+        searchBtn: "Rechercher",
+        readyStatus: "Prêt à chercher.",
+        searching: "Recherche de '{q}'...",
+        emptyInput: "Veuillez saisir un numéro ou un nom.",
+        notFound: "Aucun Squishmallow trouvé pour '{q}'.",
+        searchError: "Impossible de trouver la peluche.",
+        imgPlaceholder: "La photo du Squishmallow apparaîtra ici",
+        welcomePrompt: "Entrez un nom ou un numéro pour découvrir votre squad !",
+        filterSquadHint: "Filtrer les escouades...",
+        squadSelectBadge: "Sélectionnez une escouade pour voir les membres",
+        closeBtn: "Fermer",
+        searchInSquadHint: "Chercher dans cette escouade...",
+        arcadeTitle: "Jeux d'Arcade",
+        arcadeSubtitle: "Jouez pour gagner des peluches exclusives !",
+        clawTitle: "Machine à Pince 3D",
+        clawDesc: "Pivotez la caméra et attrapez des œufs surprises",
+        clawTip: "👆 Glissez pour faire pivoter la caméra",
+        aimLabel: "VISEE",
+        dropBtn: "🕹️ DESCENDRE LA PINCE !",
+        bubbleTitle: "Bulles Mystères",
+        bubbleDesc: "Touchez les bulles pour libérer des peluches",
+        bubbleGameSub: "Touchez une bulle mystère pour révéler le Squishmallow !",
+        trophyTitle: "Index des Trophées",
+        trophyCount: "Vous avez collecté {count} Squishmallows uniques !",
+        noTrophies: "Aucune peluche gagnée ! Rendez-vous à l'Arcade !",
+        youWon: "🎉 VOUS AVEZ GAGNÉ ! 🎉",
+        claimBtn: "Prendre la Peluche !",
+        settingsTitle: "Paramètres",
+        langLabel: "Langue",
+        doneBtn: "Terminé",
+        searchOnlineBtn: "🔍 Chercher en ligne",
+        fullName: "Nom complet",
+        collectorShort: "Collectionneur",
+        squad: "Escouade",
+        squishdate: "Date Squish",
+        wikiId: "ID Wiki",
+        biography: "Biographie",
+        foundIn: "Trouvé dans {src} • Collectionneur #{id}",
+        localVault: "Coffre hors ligne",
+        fandomWiki: "Wiki Fandom",
+        noBio: "Peluche à collectionner Squishmallow. Aucune biographie trouvée.",
+        exploreBtn: "Voir →",
+        plushiesCount: "{count} Peluches →"
+      },
+      de: {
+        appTitle: "Squishmallow Welt",
+        heroSubtitle: "Entdecke Squads, suche Plüschtiere und gewinne Überraschungseier!",
+        navSearch: "Plüschtier-Suche",
+        navSearchDesc: "Suche nach Name oder Sammlernummer",
+        navSquads: "Squad-Finder",
+        navSquadsDesc: "Erkunde Squads und Mitglieder",
+        navArcade: "Arcade-Spiele",
+        navArcadeDesc: "3D-Greifer & Zauberblasen",
+        navIndex: "Sammlung",
+        navIndexDesc: "Deine gewonnenen Squishmallows",
+        searchHint: "Sammlernummer oder Name eingeben...",
+        searchBtn: "Suchen",
+        readyStatus: "Bereit zum Suchen.",
+        searching: "Suche nach '{q}'...",
+        emptyInput: "Bitte eine Nummer oder einen Namen eingeben.",
+        notFound: "Kein Squishmallow für '{q}' gefunden.",
+        searchError: "Konnte nicht gefunden werden.",
+        imgPlaceholder: "Hier erscheint das Squishmallow-Foto",
+        welcomePrompt: "Gib oben einen Namen oder eine Nummer ein!",
+        filterSquadHint: "Gruppen filtern...",
+        squadSelectBadge: "Wähle eine Gruppe, um Mitglieder zu sehen",
+        closeBtn: "Schließen",
+        searchInSquadHint: "In dieser Gruppe suchen...",
+        arcadeTitle: "Arcade-Spiele",
+        arcadeSubtitle: "Gewinne exklusive Squishmallows für deine Sammlung!",
+        clawTitle: "3D-Greifautomat",
+        clawDesc: "Kamera drehen, zielen und Überraschungseier greifen",
+        clawTip: "👆 Wischen zum Drehen der Kamera",
+        aimLabel: "ZIEL",
+        dropBtn: "🕹️ GREIFER RUNTER!",
+        bubbleTitle: "Zauberblasen",
+        bubbleDesc: "Tippe auf Kapseln, um Plüschtiere zu befreien",
+        bubbleGameSub: "Tippe auf eine Blase, um das Squishmallow zu enthüllen!",
+        trophyTitle: "Trophäen-Sammlung",
+        trophyCount: "Du hast {count} einzigartige Squishmallows gesammelt!",
+        noTrophies: "Noch keine Plüschtiere gewonnen! Auf in die Arcade!",
+        youWon: "🎉 GEWONNEN! 🎉",
+        claimBtn: "Belohnung holen!",
+        settingsTitle: "Einstellungen",
+        langLabel: "Sprache",
+        doneBtn: "Fertig",
+        searchOnlineBtn: "🔍 Online suchen",
+        fullName: "Vollständiger Name",
+        collectorShort: "Sammler",
+        squad: "Gruppe",
+        squishdate: "Squishdatum",
+        wikiId: "Wiki-ID",
+        biography: "Biografie",
+        foundIn: "Gefunden in {src} • Sammler #{id}",
+        localVault: "Lokaler Speicher",
+        fandomWiki: "Fandom Wiki",
+        noBio: "Squishmallow Sammelplüschtier. Keine Biografie gefunden.",
+        exploreBtn: "Entdecken →",
+        plushiesCount: "{count} Plüschtiere →"
+      },
+      it: {
+        appTitle: "Mondo Squishmallow",
+        heroSubtitle: "Esplora le squadre, cerca i peluche e vinci le uova a sorpresa nell'arcade!",
+        navSearch: "Cerca Peluche",
+        navSearchDesc: "Cerca per nome o numero collezione",
+        navSquads: "Squadre",
+        navSquadsDesc: "Scopri squadre e personaggi",
+        navArcade: "Giochi Arcade",
+        navArcadeDesc: "Pesca Pupazzi 3D e Bolle Magiche",
+        navIndex: "Indice Collezione",
+        navIndexDesc: "I tuoi Squishmallow catturati",
+        searchHint: "Cerca Nº Collezionista o Nome...",
+        searchBtn: "Cerca",
+        readyStatus: "Pronto per la ricerca.",
+        searching: "Ricerca di '{q}'...",
+        emptyInput: "Inserisci un numero o un nome.",
+        notFound: "Nessun Squishmallow trovato per '{q}'.",
+        searchError: "Impossibile trovare il personaggio.",
+        imgPlaceholder: "La foto dello Squishmallow apparirà qui",
+        welcomePrompt: "Inserisci un nome o un numero sopra!",
+        filterSquadHint: "Filtra le squadre...",
+        squadSelectBadge: "Seleziona una squadra per vedere i membri",
+        closeBtn: "Chiudi",
+        searchInSquadHint: "Cerca in questa squadra...",
+        arcadeTitle: "Giochi Arcade",
+        arcadeSubtitle: "Gioca per vincere Squishmallow esclusivi!",
+        clawTitle: "Pesca Pupazzi 3D",
+        clawDesc: "Ruota la visuale, prendi la mira e afferra le uova",
+        clawTip: "👆 Trascina per ruotare la visuale",
+        aimLabel: "MIRA",
+        dropBtn: "🕹️ CALA LA PINZA!",
+        bubbleTitle: "Bolle Magiche",
+        bubbleDesc: "Tocca le capsule per liberare i peluche",
+        bubbleGameSub: "Tocca una bolla misteriosa per rivelare lo Squishmallow!",
+        trophyTitle: "Indice Trofei",
+        trophyCount: "Hai raccolto {count} Squishmallow unici!",
+        noTrophies: "Nessun peluche vinto! Vai all'Arcade!",
+        youWon: "🎉 HAI VINTO! 🎉",
+        claimBtn: "Ritira Premio!",
+        settingsTitle: "Impostazioni",
+        langLabel: "Lingua",
+        doneBtn: "Fatto",
+        searchOnlineBtn: "🔍 Cerca su Google",
+        fullName: "Nome completo",
+        collectorShort: "Collezione",
+        squad: "Squadra",
+        squishdate: "Data Squish",
+        wikiId: "ID Wiki",
+        biography: "Biografia",
+        foundIn: "Trovato in {src} • Collezione #{id}",
+        localVault: "Archivio locale",
+        fandomWiki: "Wiki Fandom",
+        noBio: "Peluche da collezione Squishmallow. Nessuna biografia trovata.",
+        exploreBtn: "Esplora →",
+        plushiesCount: "{count} Peluche →"
+      }
+    };
+
+    let currentLang = localStorage.getItem('squish_app_lang') || 'en';
+    let lastRenderedItem = null;
+    let lastRenderedSource = null;
+
+    function t(key, vars = {}) {
+      let dict = I18N[currentLang] || I18N.en;
+      let text = dict[key] || I18N.en[key] || key;
+      for (const [k, v] of Object.entries(vars)) {
+        text = text.replace(`{${k}}`, v);
+      }
+      return text;
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        el.setAttribute('placeholder', t(key));
+      });
+      document.getElementById('langSelect').value = currentLang;
+
+      // Update current dynamic screens
+      renderSquadList();
+      if (document.getElementById('indexScreen').classList.contains('active')) {
+        renderTrophyGrid();
+      }
+      if (lastRenderedItem && lastRenderedSource) {
+        renderDisplay(lastRenderedItem, lastRenderedSource);
+      }
+    }
+
+    function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+    
+    function changeLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('squish_app_lang', lang);
+      applyTranslations();
+    }
+
+    // --- DATA SEEDS ---
+    const SEED_DATA = [
+      {
+        collector_id: "1",
+        page_id: "402",
+        name: "Cam",
+        file_name: "Cam.png",
+        full_name: "Cameron the Calico Cat",
+        squishdate: "03.01.2017",
+        squad: "Classic / Original 8",
+        extract: {
+          en: "Cam the Cat is the very first Squishmallow ever produced (Collector #1). Calico cat with black and brown patches who loves skateboarding and adventures.",
+          es: "Cam el Gato es el primer Squishmallow jamás producido (Coleccionista #1). Gato calicó con manchas negras y marrones al que le encanta andar en patineta.",
+          fr: "Cam le Chat est le tout premier Squishmallow produit (Collectionneur #1). Chat calico avec des taches noires et brunes qui adore le skateboard.",
+          de: "Cam die Katze ist das allererste Squishmallow überhaupt (Sammler #1). Calico-Katze mit schwarzen und braunen Flecken, die Skateboarden liebt.",
+          it: "Cam il Gatto è il primissimo Squishmallow mai prodotto (Collezione #1). Gatto calico con macchie nere e marroni che adora andare sullo skateboard."
+        }
+      },
+      {
+        collector_id: "2",
+        page_id: "403",
+        name: "Wendy",
+        file_name: "Wendy.png",
+        full_name: "Wendy the Frog",
+        squishdate: "03.01.2017",
+        squad: "Classic / Original 8",
+        extract: {
+          en: "Wendy the Frog is an emerald green frog with a white tummy and pink cheeks. She is an environmentalist who loves basketball and gardening.",
+          es: "Wendy la Rana es una rana verde esmeralda con barriga blanca y mejillas rosadas. Es una ecologista a la que le encanta el baloncesto.",
+          fr: "Wendy la Grenouille est une grenouille vert émeraude avec un ventre blanc. C'est une écologiste qui adore le basket-ball.",
+          de: "Wendy der Frosch ist ein smaragdgrüner Frosch mit weißem Bauch. Sie ist Umweltschützerin und liebt Basketball.",
+          it: "Wendy la Rana è una rana verde smeraldo con la pancia bianca. È un'ambientalista che ama la pallacanestro."
+        }
+      },
+      {
+        collector_id: "3",
+        page_id: "404",
+        name: "Fifi",
+        file_name: "Fifi.png",
+        full_name: "Fifi the Fox",
+        squishdate: "03.01.2017",
+        squad: "Classic / Original 8",
+        extract: {
+          en: "Fifi the Fox is a vibrant orange fox with white accents. She loves yoga, agility courses, and travel.",
+          es: "Fifi la Zorra es un zorro naranja brillante con toques blancos. Le encanta el yoga y viajar.",
+          fr: "Fifi le Renard est un renard orange vif avec des accents blancs. Elle adore le yoga et les voyages.",
+          de: "Fifi der Fuchs ist ein leuchtend oranger Fuchs mit weißen Akzenten. Sie liebt Yoga und Reisen.",
+          it: "Fifi la Volpe è una volpe arancione con dettagli bianchi. Ama lo yoga e viaggiare."
+        }
+      },
+      {
+        collector_id: "4",
+        page_id: "405",
+        name: "Hans",
+        file_name: "Hans.png",
+        full_name: "Hans the Hedgehog",
+        squishdate: "03.01.2017",
+        squad: "Classic / Original 8",
+        extract: {
+          en: "Hans the Hedgehog is sweet and quiet. He loves movies, eating delicious treats, and hanging out with buddies.",
+          es: "Hans el Erizo es dulce y tranquilo. Le encantan las películas y comer cosas ricas con amigos.",
+          fr: "Hans le Hérisson est doux et calme. Il adore les films et passer du temps avec ses amis.",
+          de: "Hans der Igel ist lieb und ruhig. Er liebt Filme und leckere Snacks mit Freunden.",
+          it: "Hans il Riccio è dolce e tranquillo. Ama i film e mangiare delizie con gli amici."
+        }
+      },
+      {
+        collector_id: "58",
+        page_id: "672",
+        name: "Connor",
+        file_name: "Connor.png",
+        full_name: "Connor the Cow",
+        squishdate: "07.14.2017",
+        squad: "Farm Squad",
+        extract: {
+          en: "Connor the Cow is an athlete who loves riding his bicycle through trails and camping under starry skies.",
+          es: "Connor la Vaca es un deportista al que le encanta andar en bicicleta por senderos y acampar.",
+          fr: "Connor la Vache est un athlète qui adore faire du vélo sur les sentiers et camper à la belle étoile.",
+          de: "Connor die Kuh ist ein Sportler, der gerne mit dem Fahrrad über Pfade fährt und zeltet.",
+          it: "Connor la Mucca è un atleta che ama andare in bicicletta per sentieri e fare campeggio."
+        }
+      },
+      {
+        collector_id: "346",
+        page_id: "890",
+        name: "Archie",
+        file_name: "Archie.png",
+        full_name: "Archie the Axolotl",
+        squishdate: "08.20.2019",
+        squad: "Ocean Squad",
+        extract: {
+          en: "Archie the Axolotl is a pale pink axolotl who communicates using sign language and plays soccer.",
+          es: "Archie el Ajolote es un ajolote rosa pálido que se comunica en lengua de señas y juega fútbol.",
+          fr: "Archie l'Axolotl est un axolotl rose pâle qui communique en langue des signes et joue au football.",
+          de: "Archie der Axolotl ist ein blassrosa Axolotl, der in Gebärdensprache spricht und Fußball spielt.",
+          it: "Archie l'Axolotl è un axolotl rosa pallido che comunica con la lingua dei segni e gioca a calcio."
+        }
+      },
+      {
+        collector_id: "144",
+        page_id: "720",
+        name: "Avery",
+        file_name: "Avery.png",
+        full_name: "Avery the Mallard Duck",
+        squishdate: "05.12.2018",
+        squad: "Farm Squad",
+        extract: {
+          en: "Avery plays rugby and loves flying across the lake with his teammates.",
+          es: "Avery juega al rugby y le encanta volar sobre el lago con sus compañeros de equipo.",
+          fr: "Avery joue au rugby et adore voler au-dessus du lac avec ses coéquipiers.",
+          de: "Avery spielt Rugby und liebt es, mit seinen Teamkollegen über den See zu fliegen.",
+          it: "Avery gioca a rugby e ama volare sopra il lago con i suoi compagni di squadra."
+        }
+      },
+      {
+        collector_id: "220",
+        page_id: "812",
+        name: "Gordon",
+        file_name: "Gordon.png",
+        full_name: "Gordon the Shark",
+        squishdate: "06.10.2019",
+        squad: "Ocean Squad",
+        extract: {
+          en: "Gordon has big dreams of starting his own business and loves warm ocean currents.",
+          es: "Gordon tiene grandes sueños de iniciar su propio negocio y ama las corrientes cálidas del océano.",
+          fr: "Gordon rêve de créer sa propre entreprise et adore les courants chauds de l'océan.",
+          de: "Gordon träumt von einem eigenen Unternehmen und liebt warme Meeresströmungen.",
+          it: "Gordon sogna di aprire un'attività in proprio e adora le calde correnti oceaniche."
+        }
+      }
+    ];
+
+    const POPULAR_SQUADS = [
+      { name: "Classic / Original 8", members: ["Cam", "Wendy", "Fifi", "Hans", "Piper", "Puff", "Hoot", "Holly"] },
+      { name: "Farm Squad", members: ["Connor", "Avery", "Rosie", "Patty", "Ronnie", "Belana"] },
+      { name: "Ocean & Sea Life", members: ["Archie", "Gordon", "Sheldon", "Ricky", "Stacy", "Sunny"] },
+      { name: "Fruit & Food Squad", members: ["Scarlet", "Ashley", "Maya", "Tex", "Chanel", "Bernardo"] }
+    ];
+
+    let activeSquadMembersData = [];
+    const imageCache = {};
+
+    // Helper: Fast Safe Image Loader with CORS bypass
+    async function fetchSquishImage(characterName, specificFileName) {
+      if (imageCache[characterName]) return imageCache[characterName];
+
+      const targets = [
+        specificFileName,
+        `${characterName}.png`,
+        `${characterName}.jpg`,
+        `File:${characterName}.png`
+      ].filter(Boolean);
+
+      for (let target of targets) {
+        try {
+          const cleanTarget = target.startsWith('File:') ? target : `File:${target}`;
+          const apiUrl = `https://squishmallowsquad.fandom.com/api.php?action=query&titles=${encodeURIComponent(cleanTarget)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+          const resp = await fetch(apiUrl);
+          const data = await resp.json();
+          const pages = data.query ? data.query.pages : {};
+
+          for (let p in pages) {
+            if (pages[p].imageinfo && pages[p].imageinfo[0] && pages[p].imageinfo[0].url) {
+              let directCdn = pages[p].imageinfo[0].url.split('/revision/')[0];
+              let safeProxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(directCdn)}&default=1`;
+              imageCache[characterName] = safeProxyUrl;
+              return safeProxyUrl;
+            }
+          }
+        } catch (e) {}
+      }
+
+      const fallbackUrl = `https://images.weserv.nl/?url=${encodeURIComponent(`squishmallowsquad.fandom.com/wiki/Special:FilePath/${characterName}.png`)}`;
+      imageCache[characterName] = fallbackUrl;
+      return fallbackUrl;
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+      const active = document.getElementById(screenId);
+      if (active) active.classList.add('active');
+
+      const backBtn = document.getElementById('navBackBtn');
+      const title = document.getElementById('appHeaderTitle');
+
+      if (screenId === 'homeScreen') {
+        backBtn.style.display = 'none';
+        title.textContent = t('appTitle');
+      } else {
+        backBtn.style.display = 'flex';
+        if (screenId === 'searchScreen') title.textContent = t('navSearch');
+        if (screenId === 'squadScreen') title.textContent = t('navSquads');
+        if (screenId === 'arcadeMenuScreen') title.textContent = t('arcadeTitle');
+        if (screenId === 'clawScreen') {
+          title.textContent = t('clawTitle');
+          initThreeClaw();
+        }
+        if (screenId === 'bubbleScreen') {
+          title.textContent = t('bubbleTitle');
+          renderGashaBubbles();
+        }
+        if (screenId === 'indexScreen') {
+          title.textContent = t('navIndex');
+          renderTrophyGrid();
+        }
+      }
+    }
+
+    // --- SEARCH LOGIC ---
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') runSearch();
+    });
+
+    async function runSearch(prefilledQuery) {
+      const input = document.getElementById('searchInput');
+      if (prefilledQuery) input.value = prefilledQuery;
+      const query = input.value.trim();
+      const status = document.getElementById('statusBadge');
+      if (!query) {
+        status.textContent = t('emptyInput');
+        return;
+      }
+
+      status.textContent = t('searching', { q: query });
+      resetDisplay();
+
+      const seedMatch = SEED_DATA.find(s => s.name.toLowerCase() === query.toLowerCase() || s.collector_id === query);
+      if (seedMatch) {
+        const resolvedImg = await fetchSquishImage(seedMatch.name, seedMatch.file_name);
+        seedMatch.img_url = resolvedImg;
+        renderDisplay(seedMatch, t('localVault'));
+        return;
+      }
+
+      try {
+        await searchOnline(query);
+      } catch (err) {
+        status.textContent = t('searchError');
+      }
+    }
+
+    async function searchOnline(query) {
+      const isId = /^\d+$/.test(query);
+      const apiBase = "https://squishmallowsquad.fandom.com/api.php";
+      let pageId = null;
+      let pageTitle = null;
+
+      if (!isId) {
+        try {
+          const prefixParams = new URLSearchParams({
+            action: "query",
+            list: "prefixsearch",
+            pssearch: query,
+            pslimit: "1",
+            format: "json",
+            origin: "*"
+          });
+          const pResp = await fetch(`${apiBase}?${prefixParams.toString()}`);
+          const pData = await pResp.json();
+          if (pData.query && pData.query.prefixsearch && pData.query.prefixsearch.length > 0) {
+            pageId = pData.query.prefixsearch[0].pageid;
+            pageTitle = pData.query.prefixsearch[0].title;
+          }
+        } catch (e) {}
+      }
+
+      if (!pageId) {
+        const srTerm = isId ? `collector_number ${query}` : query;
+        const searchParams = new URLSearchParams({
+          action: "query",
+          list: "search",
+          srsearch: srTerm,
+          srlimit: "1",
+          format: "json",
+          origin: "*"
+        });
+
+        const sResp = await fetch(`${apiBase}?${searchParams.toString()}`);
+        const sData = await sResp.json();
+        const hits = (sData.query && sData.query.search) ? sData.query.search : [];
+
+        if (hits.length > 0) {
+          pageId = hits[0].pageid;
+          pageTitle = hits[0].title;
+        }
+      }
+
+      if (!pageId) {
+        document.getElementById('statusBadge').textContent = t('notFound', { q: query });
+        return;
+      }
+
+      const parseParams = new URLSearchParams({
+        action: "parse",
+        pageid: pageId,
+        prop: "text|wikitext|images",
+        redirects: "1",
+        format: "json",
+        origin: "*"
+      });
+
+      const pResp = await fetch(`${apiBase}?${parseParams.toString()}`);
+      const pData = await pResp.json();
+      const parse = pData.parse || {};
+
+      const title = parse.title || pageTitle || query;
+      const htmlText = (parse.text && parse.text['*']) || "";
+      const wikitext = (parse.wikitext && parse.wikitext['*']) || "";
+      const images = parse.images || [];
+
+      let collectorNum = extractField(wikitext, /\|\s*(?:collector_number|collector number|number)\s*=\s*([^|\n]+)/i);
+      collectorNum = collectorNum.replace(/[#\[\]{}']/g, '').trim();
+      if (!collectorNum && isId) collectorNum = query;
+
+      let primaryImgFile = images.find(img => /\.(png|jpg|jpeg)$/i.test(img) && !/(icon|badge|star|button|logo)/i.test(img)) || `${title}.png`;
+      const directResolvedImg = await fetchSquishImage(title, primaryImgFile);
+
+      const record = {
+        collector_id: collectorNum || "N/A",
+        page_id: String(pageId),
+        name: title,
+        full_name: extractFullName(wikitext, title),
+        squishdate: extractField(wikitext, /\|\s*(?:squishdate|date)\s*=\s*([^|\n]+)/i) || "Unknown",
+        squad: extractField(wikitext, /\|\s*(?:squad|subsquad)\s*=\s*([^|\n]+)/i) || "Standard",
+        extract: extractBio(htmlText),
+        img_url: directResolvedImg
+      };
+
+      renderDisplay(record, t('fandomWiki'));
+    }
+
+    function extractField(wikitext, regex) {
+      const match = wikitext.match(regex);
+      if (!match) return "";
+      let val = match[1].split('\n')[0].split('|')[0];
+      return val.replace(/\{\{[^}]*\}\}/g, '').replace(/[\[\]{}'<>]/g, '').trim();
+    }
+
+    function extractFullName(wikitext, defaultTitle) {
+      const fn = extractField(wikitext, /\|\s*(?:fullname|full name)\s*=\s*([^|\n]+)/i);
+      const species = extractField(wikitext, /\|\s*(?:species)\s*=\s*([^|\n]+)/i);
+      if (fn && fn.toLowerCase() !== defaultTitle.toLowerCase()) {
+        return (species && !fn.toLowerCase().includes("the")) ? `${fn} the ${species}` : fn;
+      }
+      return species ? `${defaultTitle} the ${species}` : defaultTitle;
+    }
+
+    function extractBio(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      const paragraphs = div.querySelectorAll('p');
+      for (let p of paragraphs) {
+        let clean = p.textContent.replace(/\[\d+\]/g, '').trim();
+        if (clean.length > 30 && !clean.startsWith("Squishmallows") && !clean.startsWith("This article")) {
+          return clean;
+        }
+      }
+      return t('noBio');
+    }
+
+    function getTranslatedBio(extract) {
+      if (typeof extract === 'object') {
+        return extract[currentLang] || extract.en || Object.values(extract)[0];
+      }
+      return extract || t('noBio');
+    }
+
+    function renderDisplay(item, source) {
+      lastRenderedItem = item;
+      lastRenderedSource = source;
+
+      document.getElementById('statusBadge').textContent = t('foundIn', { src: source, id: item.collector_id });
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent('Squishmallow ' + item.full_name)}`;
+
+      const bio = getTranslatedBio(item.extract);
+
+      const card = document.getElementById('detailsCard');
+      card.innerHTML = `
+        <div class="card-top-row">
+          <h2>${item.name}</h2>
+          <a href="${googleSearchUrl}" target="_blank" rel="noopener" class="google-btn">
+            ${t('searchOnlineBtn')}
+          </a>
+        </div>
+        <div class="meta-row"><strong>${t('fullName')}:</strong> ${item.full_name}</div>
+        <div class="meta-row">
+          <span class="badge-pill">${t('collectorShort')} #${item.collector_id}</span> 
+          <span class="badge-pill">${t('squad')}: ${item.squad}</span>
+        </div>
+        <div class="meta-row"><strong>${t('squishdate')}:</strong> ${item.squishdate}</div>
+        <div class="meta-row" style="color:var(--text-muted); font-size:0.75rem;">${t('wikiId')}: ${item.page_id}</div>
+        <div class="bio-box">
+          <strong>${t('biography')}:</strong><br>${bio}
+        </div>
+      `;
+
+      const img = document.getElementById('squishImg');
+      const placeholder = document.getElementById('imgPlaceholder');
+
+      img.onload = () => {
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+      };
+      img.onerror = () => {
+        img.src = `https://images.weserv.nl/?url=squishmallowsquad.fandom.com/wiki/Special:FilePath/${encodeURIComponent(item.name)}.png`;
+      };
+      img.src = item.img_url;
+    }
+
+    function resetDisplay() {
+      document.getElementById('squishImg').style.display = 'none';
+      document.getElementById('imgPlaceholder').style.display = 'block';
+      document.getElementById('imgPlaceholder').textContent = "Loading image...";
+    }
+
+    // --- SQUAD BROWSER ---
+    function renderSquadList(squads = POPULAR_SQUADS) {
+      const container = document.getElementById('squadsContainer');
+      container.innerHTML = '';
+      squads.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'squad-item';
+        div.innerHTML = `
+          <h4 style="font-weight:700;">${s.name}</h4>
+          <span style="font-size:0.75rem; color:var(--primary-pink); font-weight:bold;">${t('plushiesCount', { count: s.members.length })}</span>
+        `;
+        div.onclick = () => openSquadMembers(s);
+        container.appendChild(div);
+      });
+    }
+
+    function filterSquadList() {
+      const val = document.getElementById('squadSearchInput').value.toLowerCase().trim();
+      const filtered = POPULAR_SQUADS.filter(s => s.name.toLowerCase().includes(val));
+      renderSquadList(filtered);
+    }
+
+    function openSquadMembers(squad) {
+      document.getElementById('squadsContainer').style.display = 'none';
+      const membersView = document.getElementById('squadMembersView');
+      membersView.style.display = 'flex';
+      document.getElementById('activeSquadTitle').textContent = squad.name;
+      activeSquadMembersData = squad.members;
+      renderActiveSquadMembers(squad.members);
+    }
+
+    function closeSquadMembers() {
+      document.getElementById('squadsContainer').style.display = 'flex';
+      document.getElementById('squadMembersView').style.display = 'none';
+    }
+
+    async function renderActiveSquadMembers(members) {
+      const grid = document.getElementById('squadMembersGrid');
+      grid.innerHTML = '';
+      for (let name of members) {
+        const card = document.createElement('div');
+        card.className = 'fixed-plush-card';
+        card.innerHTML = `
+          <img id="squad_img_${name}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='25' fill='%23f0e8f5'/%3E%3C/svg%3E" alt="${name}">
+          <h4>${name}</h4>
+          <span>${t('exploreBtn')}</span>
+        `;
+        card.onclick = () => {
+          showScreen('searchScreen');
+          runSearch(name);
+        };
+        grid.appendChild(card);
+
+        fetchSquishImage(name).then(imgUrl => {
+          const el = document.getElementById(`squad_img_${name}`);
+          if (el) el.src = imgUrl;
+        });
+      }
+    }
+
+    function filterActiveSquadMembers() {
+      const val = document.getElementById('memberFilterInput').value.toLowerCase().trim();
+      const filtered = activeSquadMembersData.filter(name => name.toLowerCase().includes(val));
+      renderActiveSquadMembers(filtered);
+    }
+
+    // --- GAME 2: POPPING BUBBLES ---
+    function renderGashaBubbles() {
+      const container = document.getElementById('gashaContainer');
+      container.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'gasha-bubble';
+        bubble.innerHTML = '🎁';
+        bubble.onclick = () => popMysteryBubble(bubble);
+        container.appendChild(bubble);
+      }
+    }
+
+    async function popMysteryBubble(el) {
+      el.style.transform = 'scale(1.4)';
+      el.style.opacity = '0';
+      el.style.transition = 'all 0.25s ease-out';
+      setTimeout(async () => {
+        const randomSquish = SEED_DATA[Math.floor(Math.random() * SEED_DATA.length)];
+        randomSquish.img_url = await fetchSquishImage(randomSquish.name, randomSquish.file_name);
+        saveToCollectionIndex(randomSquish);
+        openPrizeModal(randomSquish);
+        renderGashaBubbles();
+      }, 260);
+    }
+
+    // --- GAME 1: 3D CLAW MACHINE ---
+    let scene, camera, renderer, controls;
+    let clawMesh, clawPincers = [];
+    let eggMeshes = [];
+    let isDropping = false;
+    let clawState = 'idle';
+    let clawTargetX = 0, clawTargetZ = 0;
+    let threeInitialized = false;
+
+    const EGG_COLORS = [0xff6b8b, 0x845ec2, 0x00c9a7, 0xffc75f, 0xbaedff, 0xff9671, 0xff85a1, 0xbbf2f6];
+
+    function initThreeClaw() {
+      if (threeInitialized) return;
+      const canvas = document.getElementById('threeCanvas');
+      const container = canvas.parentElement;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf6eef8);
+
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(0, 7.5, 9.5);
+
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2.05;
+      controls.minDistance = 4;
+      controls.maxDistance = 14;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+      dirLight.position.set(5, 12, 7);
+      scene.add(dirLight);
+
+      buildClawMachineEnvironment();
+      spawnManySurpriseEggs();
+      buildClawMesh();
+
+      threeInitialized = true;
+      animateClawScene();
+    }
+
+    function buildClawMachineEnvironment() {
+      const baseGeo = new THREE.BoxGeometry(5.2, 0.4, 5.2);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0xff8fa3, roughness: 0.3 });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.y = -0.2;
+      scene.add(baseMesh);
+
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.1,
+        transmission: 0.9,
+        thickness: 0.5
+      });
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(5, 6, 5), glassMat);
+      glass.position.y = 3;
+      scene.add(glass);
+
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(5.3, 0.6, 5.3), new THREE.MeshStandardMaterial({ color: 0x845ec2 }));
+      roof.position.y = 6.2;
+      scene.add(roof);
+
+      const pillarGeo = new THREE.CylinderGeometry(0.1, 0.1, 6);
+      const pillarMat = new THREE.MeshStandardMaterial({ color: 0xffd1dc });
+      [[-2.4, -2.4], [2.4, -2.4], [-2.4, 2.4], [2.4, 2.4]].forEach(([x, z]) => {
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.set(x, 3, z);
+        scene.add(pillar);
+      });
+    }
+
+    function spawnManySurpriseEggs() {
+      eggMeshes.forEach(e => scene.remove(e));
+      eggMeshes = [];
+
+      const totalEggs = 24;
+      for (let i = 0; i < totalEggs; i++) {
+        const squish = SEED_DATA[i % SEED_DATA.length];
+        const eggGroup = new THREE.Group();
+
+        const color = EGG_COLORS[i % EGG_COLORS.length];
+        const eggGeo = new THREE.SphereGeometry(0.38, 20, 20);
+        eggGeo.scale(1, 1.25, 1);
+        const mesh = new THREE.Mesh(eggGeo, new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 }));
+        eggGroup.add(mesh);
+
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.08, 20), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+        eggGroup.add(band);
+
+        const radius = 0.4 + Math.random() * 1.6;
+        const angle = Math.random() * Math.PI * 2;
+        const pileHeight = (i > 16) ? 0.95 : 0.42;
+
+        eggGroup.position.set(
+          Math.cos(angle) * radius,
+          pileHeight,
+          Math.sin(angle) * radius
+        );
+        eggGroup.rotation.z = (Math.random() - 0.5) * 0.4;
+        eggGroup.rotation.x = (Math.random() - 0.5) * 0.4;
+
+        eggGroup.userData = { squishmallow: squish };
+        scene.add(eggGroup);
+        eggMeshes.push(eggGroup);
+      }
+    }
+
+    function buildClawMesh() {
+      clawMesh = new THREE.Group();
+
+      const motor = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.8), new THREE.MeshStandardMaterial({ color: 0x332244 }));
+      clawMesh.add(motor);
+
+      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1), new THREE.MeshBasicMaterial({ color: 0xaaaaaa }));
+      rope.position.y = 0.5;
+      clawMesh.add(rope);
+
+      const hub = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshStandardMaterial({ color: 0xff6b8b }));
+      clawMesh.add(hub);
+
+      clawPincers = [];
+      for (let i = 0; i < 3; i++) {
+        const angle = (i * Math.PI * 2) / 3;
+        const pincer = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.5), new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.8 }));
+        pincer.rotation.z = 0.45;
+        pincer.rotation.y = angle;
+        pincer.position.set(Math.cos(angle) * 0.18, -0.22, Math.sin(angle) * 0.18);
+        clawMesh.add(pincer);
+        clawPincers.push(pincer);
+      }
+
+      clawMesh.position.set(0, 5.2, 0);
+      scene.add(clawMesh);
+    }
+
+    let clawMoveDirection = null;
+    let clawMoveInterval = null;
+
+    function startClawMove(dir) {
+      if (isDropping) return;
+      clawMoveDirection = dir;
+      moveClawStep();
+      clawMoveInterval = setInterval(moveClawStep, 40);
+    }
+
+    function stopClawMove() {
+      clearInterval(clawMoveInterval);
+      clawMoveDirection = null;
+    }
+
+    function moveClawStep() {
+      if (!clawMesh || isDropping) return;
+      const speed = 0.09;
+      const bounds = 1.9;
+
+      if (clawMoveDirection === 'left') clawTargetX = Math.max(-bounds, clawTargetX - speed);
+      if (clawMoveDirection === 'right') clawTargetX = Math.min(bounds, clawTargetX + speed);
+      if (clawMoveDirection === 'up') clawTargetZ = Math.max(-bounds, clawTargetZ - speed);
+      if (clawMoveDirection === 'down') clawTargetZ = Math.min(bounds, clawTargetZ + speed);
+    }
+
+    function triggerClawDrop() {
+      if (isDropping) return;
+      isDropping = true;
+      document.getElementById('clawDropBtn').disabled = true;
+      clawState = 'dropping';
+    }
+
+    let grabbedEgg = null;
+
+    function animateClawScene() {
+      requestAnimationFrame(animateClawScene);
+
+      if (clawMesh && clawState === 'idle') {
+        clawMesh.position.x += (clawTargetX - clawMesh.position.x) * 0.15;
+        clawMesh.position.z += (clawTargetZ - clawMesh.position.z) * 0.15;
+      }
+
+      if (clawState === 'dropping') {
+        clawMesh.position.y -= 0.06;
+        if (clawMesh.position.y <= 0.8) {
+          clawState = 'grabbing';
+          eggMeshes.forEach(egg => {
+            const dist = clawMesh.position.distanceTo(egg.position);
+            if (dist < 0.9 && !grabbedEgg) {
+              grabbedEgg = egg;
+            }
+          });
+        }
+      } else if (clawState === 'grabbing') {
+        clawPincers.forEach(p => p.rotation.z = 0.1);
+        setTimeout(() => { clawState = 'rising'; }, 350);
+      } else if (clawState === 'rising') {
+        clawMesh.position.y += 0.05;
+        if (grabbedEgg) {
+          grabbedEgg.position.set(clawMesh.position.x, clawMesh.position.y - 0.45, clawMesh.position.z);
+        }
+        if (clawMesh.position.y >= 5.2) {
+          clawState = 'returning';
+        }
+      } else if (clawState === 'returning') {
+        clawMesh.position.x += (-1.8 - clawMesh.position.x) * 0.05;
+        clawMesh.position.z += (1.8 - clawMesh.position.z) * 0.05;
+        if (grabbedEgg) {
+          grabbedEgg.position.set(clawMesh.position.x, clawMesh.position.y - 0.45, clawMesh.position.z);
+        }
+
+        if (Math.abs(clawMesh.position.x - (-1.8)) < 0.12 && Math.abs(clawMesh.position.z - 1.8) < 0.12) {
+          clawPincers.forEach(p => p.rotation.z = 0.45);
+          if (grabbedEgg) {
+            const wonSquish = grabbedEgg.userData.squishmallow;
+            scene.remove(grabbedEgg);
+            eggMeshes = eggMeshes.filter(e => e !== grabbedEgg);
+            grabbedEgg = null;
+            fetchSquishImage(wonSquish.name, wonSquish.file_name).then(resolvedUrl => {
+              wonSquish.img_url = resolvedUrl;
+              saveToCollectionIndex(wonSquish);
+              openPrizeModal(wonSquish);
+            });
+          }
+
+          setTimeout(() => {
+            clawTargetX = 0;
+            clawTargetZ = 0;
+            clawState = 'idle';
+            isDropping = false;
+            document.getElementById('clawDropBtn').disabled = false;
+            if (eggMeshes.length <= 4) spawnManySurpriseEggs();
+          }, 700);
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // --- PRIZE MODAL ---
+    async function openPrizeModal(squish) {
+      document.getElementById('prizeName').textContent = squish.name;
+      document.getElementById('prizeFullName').textContent = squish.full_name;
+      document.getElementById('prizeCollector').textContent = `#${squish.collector_id}`;
+      document.getElementById('prizeSquad').textContent = squish.squad;
+      document.getElementById('prizeDate').textContent = `${t('squishdate')}: ${squish.squishdate}`;
+
+      const bio = getTranslatedBio(squish.extract);
+      document.getElementById('prizeBio').innerHTML = `<strong>${t('biography')}:</strong><br>${bio}`;
+
+      const img = document.getElementById('prizeImg');
+      const directUrl = squish.img_url || await fetchSquishImage(squish.name, squish.file_name);
+
+      img.onload = () => { img.style.display = 'block'; };
+      img.onerror = () => {
+        img.src = `https://images.weserv.nl/?url=squishmallowsquad.fandom.com/wiki/Special:FilePath/${encodeURIComponent(squish.name)}.png`;
+      };
+      img.src = directUrl;
+
+      document.getElementById('prizeModal').style.display = 'flex';
+    }
+
+    function closePrizeModal() {
+      document.getElementById('prizeModal').style.display = 'none';
+      if (document.getElementById('indexScreen').classList.contains('active')) {
+        renderTrophyGrid();
+      }
+    }
+
+    function saveToCollectionIndex(item) {
+      let trophies = JSON.parse(localStorage.getItem('squish_trophies') || '[]');
+      if (!trophies.some(t => t.collector_id === item.collector_id)) {
+        trophies.push(item);
+        localStorage.setItem('squish_trophies', JSON.stringify(trophies));
+      }
+    }
+
+    async function renderTrophyGrid() {
+      const trophies = JSON.parse(localStorage.getItem('squish_trophies') || '[]');
+      document.getElementById('indexStatsText').textContent = t('trophyCount', { count: trophies.length });
+      const grid = document.getElementById('trophyGrid');
+      grid.innerHTML = '';
+
+      if (trophies.length === 0) {
+        grid.innerHTML = `<div style="grid-column:span 2; text-align:center; padding:30px; color:var(--text-muted); font-weight:600;">${t('noTrophies')}</div>`;
+        return;
+      }
+
+      for (let tItem of trophies) {
+        const card = document.createElement('div');
+        card.className = 'fixed-plush-card';
+        card.innerHTML = `
+          <img id="trophy_img_${tItem.collector_id}" src="${tItem.img_url || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'25\' fill=\'%23f0e8f5\'/%3E%3C/svg%3E'}" alt="${tItem.name}">
+          <h4>${tItem.name}</h4>
+          <span>#${tItem.collector_id}</span>
+        `;
+        card.onclick = () => openPrizeModal(tItem);
+        grid.appendChild(card);
+
+        if (!tItem.img_url || tItem.img_url.includes('data:image')) {
+          fetchSquishImage(tItem.name, tItem.file_name).then(url => {
+            tItem.img_url = url;
+            const el = document.getElementById(`trophy_img_${tItem.collector_id}`);
+            if (el) el.src = url;
+          });
+        }
+      }
+    }
+
+    // Initialize UI language on launch
+    applyTranslations();
+  </script>
+</body>
+</html>
