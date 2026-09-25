@@ -6,25 +6,33 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 18
+          node-version: 22
 
-      - name: Install Cordova or Capacitor
+      - name: Install Dependencies and Frameworks
         run: |
           npm init -y
           npm install @capacitor/core @capacitor/cli
-          npx cap init "Squishmallows" "com.yourname.squishmallows" --web-dir=.
+          npx cap init "Squishmallows" "com.flaxyditto.squishmallows" --web-dir=.
           npx cap add ios
 
       - name: Build Xcode Project
         run: |
           npx cap sync ios
           cd ios/App
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          xcodebuild clean build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE=""
 
       - name: Package Payload into IPA
         run: |
@@ -38,4 +46,3 @@ jobs:
         with:
           name: squishmallows-ipa
           path: Squishmallows.ipa
-          
